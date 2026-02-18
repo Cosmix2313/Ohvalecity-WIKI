@@ -260,3 +260,44 @@ input:focus {
     align-items: flex-start;
   }
 }
+
+.small {
+  font-size: 0.86rem;
+}
+
+.admin-panel {
+  border-color: rgba(180, 210, 255, 0.45);
+}
+
+.admin-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 0.8rem;
+}
+
+.admin-form {
+  border: 1px solid rgba(137, 178, 250, 0.25);
+  border-radius: 12px;
+  padding: 0.9rem;
+  background: rgba(8, 18, 37, 0.72);
+}
+
+.admin-form h4 {
+  margin: 0 0 0.7rem;
+}
+
+.admin-form label {
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+#adminMessage {
+  margin-top: 0.8rem;
+}
+
+@media (max-width: 960px) {
+  .admin-grid {
+    grid-template-columns: 1fr;
+  }
+}

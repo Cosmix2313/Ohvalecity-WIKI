@@ -17,7 +17,7 @@
 
         <form id="loginForm" class="login-form">
           <label for="agentId">Agent ID</label>
-          <input id="agentId" type="text" placeholder="Esempio: FC-214" required />
+          <input id="agentId" type="text" placeholder="Esempio: FC-214 o FC-ADMIN" required />
 
           <label for="passcode">Passcode</label>
           <input id="passcode" type="password" placeholder="••••••••" required />
@@ -32,14 +32,20 @@
           <div>
             <p class="tag">Restricted / Need-to-know</p>
             <h2>Fort Carson Investigative Hub</h2>
+            <p class="muted small" id="sessionRole"></p>
           </div>
           <button id="logoutButton" class="button ghost">Disconnetti</button>
         </header>
 
         <section class="grid">
           <article class="card panel">
-            <h3>Lista agenti detective</h3>
+            <h3>Registro agenti detective</h3>
             <div id="agentsList" class="tile-list"></div>
+          </article>
+
+          <article class="card panel">
+            <h3>Registro armi</h3>
+            <div id="weaponsList" class="tile-list"></div>
           </article>
 
           <article class="card panel">
@@ -52,9 +58,14 @@
             <div id="docsList" class="tile-list"></div>
           </article>
 
+          <article class="card panel span-2">
+            <h3>Ricercati / Sorvegliati</h3>
+            <div id="wantedList" class="records-list"></div>
+          </article>
+
           <article class="card panel">
-            <h3>Registro armi</h3>
-            <div id="weaponsList" class="tile-list"></div>
+            <h3>Panoramica operativa</h3>
+            <ul class="stats" id="statsList"></ul>
           </article>
 
           <article class="card panel full">
@@ -74,13 +85,53 @@
           </article>
 
           <article class="card panel">
-            <h3>Panoramica operativa</h3>
-            <ul class="stats" id="statsList"></ul>
+            <h3>Indagini rapide</h3>
+            <div id="linksList" class="links-grid"></div>
           </article>
 
-          <article class="card panel full">
-            <h3>Link utili</h3>
-            <div id="linksList" class="links-grid"></div>
+          <article class="card panel full admin-panel" id="adminPanel" hidden>
+            <h3>Pannello Admin</h3>
+            <p class="muted small">
+              Come admin puoi inserire nuovi ricercati e link indagini (es. Google Sheet condiviso)
+              visibili a chi ha accesso al database.
+            </p>
+
+            <div class="admin-grid">
+              <form id="wantedForm" class="admin-form">
+                <h4>Aggiungi ricercato</h4>
+                <label for="wantedName">Nome</label>
+                <input id="wantedName" name="wantedName" type="text" required />
+
+                <label for="wantedAlias">Alias</label>
+                <input id="wantedAlias" name="wantedAlias" type="text" required />
+
+                <label for="wantedDanger">Livello</label>
+                <input id="wantedDanger" name="wantedDanger" type="text" placeholder="Alto / Medio" required />
+
+                <label for="wantedNote">Nota</label>
+                <input id="wantedNote" name="wantedNote" type="text" required />
+
+                <button class="button" type="submit">Salva ricercato</button>
+              </form>
+
+              <form id="investigationForm" class="admin-form">
+                <h4>Aggiungi link indagine</h4>
+                <label for="investigationTitle">Titolo</label>
+                <input id="investigationTitle" name="investigationTitle" type="text" required />
+
+                <label for="investigationUrl">URL (Google Sheet o altro)</label>
+                <input
+                  id="investigationUrl"
+                  name="investigationUrl"
+                  type="url"
+                  placeholder="https://docs.google.com/..."
+                  required
+                />
+
+                <button class="button" type="submit">Salva link indagine</button>
+              </form>
+            </div>
+            <p id="adminMessage" class="muted small" aria-live="polite"></p>
           </article>
         </section>
       </section>
