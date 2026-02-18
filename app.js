@@ -1,19 +1,48 @@
 const LOGIN_KEY = "fcid-session";
 const LOGIN_ROLE_KEY = "fcid-role";
+const LOGIN_ID_KEY = "fcid-agent-id";
+const AGENTS_KEY = "fcid-agents";
 const WANTED_KEY = "fcid-wanted";
 const LINKS_KEY = "fcid-investigation-links";
 const WEAPONS_KEY = "fcid-weapons";
 
-const ACCESS = {
-  user: { id: "FC-214", passcode: "fortcarson" },
-  admin: { id: "FC-ADMIN", passcode: "fortadmin" },
-};
-
-const detectives = [
-  { id: "FC-214", name: "Lt. Mason Reed", unit: "CID Alpha", status: "On Duty" },
-  { id: "FC-327", name: "Sgt. Elena Rossi", unit: "Digital Forensics", status: "In Lab" },
-  { id: "FC-198", name: "Det. Marcus Hayes", unit: "Field Intel", status: "In Patrol" },
-  { id: "FC-412", name: "Det. Linda Ortega", unit: "Interviews", status: "Briefing" },
+const defaultAgents = [
+  {
+    id: "FC-ADMIN",
+    name: "Cmdr. Ava Sullivan",
+    unit: "Command Desk",
+    status: "Supervisione",
+    assignedCases: 2,
+    passcode: "fortadmin",
+    role: "admin",
+  },
+  {
+    id: "FC-214",
+    name: "Lt. Mason Reed",
+    unit: "CID Alpha",
+    status: "On Duty",
+    assignedCases: 2,
+    passcode: "fortcarson",
+    role: "user",
+  },
+  {
+    id: "FC-327",
+    name: "Sgt. Elena Rossi",
+    unit: "Digital Forensics",
+    status: "In Lab",
+    assignedCases: 1,
+    passcode: "rossi327",
+    role: "user",
+  },
+  {
+    id: "FC-412",
+    name: "Det. Linda Ortega",
+    unit: "Interviews",
+    status: "Briefing",
+    assignedCases: 3,
+    passcode: "ortega412",
+    role: "user",
+  },
 ];
 
 const openCases = [
@@ -27,6 +56,19 @@ const documentation = [
   "Checklist Digital Evidence Handling",
   "Linee guida catena di custodia",
   "Manuale rischio operativo in campo",
+];
+
+const regulations = [
+  "Ogni accesso ai dati investigativi deve essere tracciato e motivato.",
+  "Gli operatori aggiornano solo il proprio profilo operativo (stato + assegnazione indagini).",
+  "I link esterni alle indagini devono usare servizi autorizzati (Google Workspace militare o equivalente).",
+  "Le indagini chiuse vengono rimosse dal database locale operativo.",
+];
+
+const usefulLinks = [
+  { label: "Portale documentazione interna", url: "https://docs.google.com/" },
+  { label: "Modulo richiesta supporto forense", url: "https://forms.google.com/" },
+  { label: "Knowledge base catena di custodia", url: "https://drive.google.com/" },
 ];
 
 const defaultArmoryRegister = [
@@ -66,11 +108,13 @@ const records = [
 const defaultWanted = [
   { name: "Bennett, Carl", alias: "North Wolf", danger: "Alto", note: "Ricercato per furto armamenti" },
   { name: "Wright, Zoe", alias: "Phantom", danger: "Medio", note: "Frode documentale su supply chain" },
+  { name: "Larsen, Viktor", alias: "Icepit", danger: "Alto", note: "Sospetto traffico componenti dual use" },
 ];
 
 const defaultLinks = [
   { label: "Sheet indagine Sandtrail", url: "https://docs.google.com/" },
   { label: "Dossier armi sospette", url: "https://docs.google.com/" },
+  { label: "Foglio intelligence confini", url: "https://docs.google.com/" },
 ];
 
 const timelineEvents = [
@@ -97,6 +141,8 @@ const els = {
   agentsList: document.getElementById("agentsList"),
   casesList: document.getElementById("casesList"),
   docsList: document.getElementById("docsList"),
+  regulationsList: document.getElementById("regulationsList"),
+  usefulLinksList: document.getElementById("usefulLinksList"),
   weaponsList: document.getElementById("weaponsList"),
   wantedList: document.getElementById("wantedList"),
   linksList: document.getElementById("linksList"),
@@ -104,12 +150,14 @@ const els = {
   adminPanel: document.getElementById("adminPanel"),
   wantedForm: document.getElementById("wantedForm"),
   investigationForm: document.getElementById("investigationForm"),
+  agentForm: document.getElementById("agentForm"),
   adminMessage: document.getElementById("adminMessage"),
 };
 
-let wanted = loadList(WANTED_KEY, defaultWanted);
-let investigationLinks = loadList(LINKS_KEY, defaultLinks);
-let armoryRegister = loadList(WEAPONS_KEY, defaultArmoryRegister);
+let agents = loadList(AGENTS_KEY, defaultAgents, true);
+let wanted = loadList(WANTED_KEY, defaultWanted, true);
+let investigationLinks = loadList(LINKS_KEY, defaultLinks, false);
+let armoryRegister = loadList(WEAPONS_KEY, defaultArmoryRegister, true);
 
 init();
 
@@ -119,15 +167,7 @@ function init() {
 
   toggleSession(isLogged, role);
 
-  renderAgents();
-  renderCases();
-  renderDocs();
-  renderWeapons();
-  renderWanted();
-  renderTimeline();
-  renderStats();
-  renderRecords(records);
-  renderLinks();
+  renderAll();
 
   els.loginForm.addEventListener("submit", handleLogin);
   els.logoutButton.addEventListener("click", handleLogout);
@@ -136,36 +176,48 @@ function init() {
   els.linksList.addEventListener("click", handleCloseInvestigation);
   els.wantedForm.addEventListener("submit", handleAddWanted);
   els.investigationForm.addEventListener("submit", handleAddInvestigationLink);
+  els.agentForm.addEventListener("submit", handleAddAgent);
+  els.agentsList.addEventListener("submit", handleAgentUpdate);
+}
+
+function renderAll() {
+  renderAgents();
+  renderCases();
+  renderDocs();
+  renderRegulations();
+  renderUsefulLinks();
+  renderWeapons();
+  renderWanted();
+  renderTimeline();
+  renderStats();
+  renderRecords(records);
+  renderLinks();
 }
 
 function handleLogin(event) {
   event.preventDefault();
 
   const id = els.agentId.value.trim().toUpperCase();
-  const pass = els.passcode.value.trim().toLowerCase();
+  const pass = els.passcode.value.trim();
+  const agent = findAgent(id);
 
-  let role = "";
-
-  if (id === ACCESS.admin.id && pass === ACCESS.admin.passcode) {
-    role = "admin";
-  } else if (id === ACCESS.user.id && pass === ACCESS.user.passcode) {
-    role = "user";
-  }
-
-  if (!role) {
+  if (!agent || agent.passcode !== pass) {
     els.loginError.textContent = "Credenziali non valide. Verifica Agent ID e passcode.";
     return;
   }
 
   els.loginError.textContent = "";
   localStorage.setItem(LOGIN_KEY, "1");
-  localStorage.setItem(LOGIN_ROLE_KEY, role);
-  toggleSession(true, role);
+  localStorage.setItem(LOGIN_ROLE_KEY, agent.role);
+  localStorage.setItem(LOGIN_ID_KEY, agent.id);
+  toggleSession(true, agent.role);
+  renderAgents();
 }
 
 function handleLogout() {
   localStorage.removeItem(LOGIN_KEY);
   localStorage.removeItem(LOGIN_ROLE_KEY);
+  localStorage.removeItem(LOGIN_ID_KEY);
   els.loginForm.reset();
   toggleSession(false, "guest");
 }
@@ -180,6 +232,61 @@ function handleSearch() {
   renderRecords(filtered);
 }
 
+function handleAgentUpdate(event) {
+  event.preventDefault();
+
+  const form = event.target.closest("form[data-agent-update]");
+  if (!form) {
+    return;
+  }
+
+  const currentAgent = getCurrentAgent();
+  if (!currentAgent) {
+    return;
+  }
+
+  const targetId = form.dataset.agentUpdate;
+  const editable = currentAgent.role === "admin" || currentAgent.id === targetId;
+  if (!editable) {
+    return;
+  }
+
+  const formData = new FormData(form);
+  const status = String(formData.get("status") || "").trim();
+  const assignedCases = Number(formData.get("assignedCases"));
+  const name = String(formData.get("name") || "").trim();
+  const unit = String(formData.get("unit") || "").trim();
+
+  if (!status || ![1, 2, 3].includes(assignedCases)) {
+    return;
+  }
+
+  const target = agents.find((agent) => agent.id === targetId);
+  if (!target) {
+    return;
+  }
+
+  if (currentAgent.role === "admin") {
+    target.name = name || target.name;
+    target.unit = unit || target.unit;
+  }
+
+  if (currentAgent.id === targetId) {
+    target.name = name || target.name;
+    target.unit = unit || target.unit;
+  }
+
+  target.status = status;
+  target.assignedCases = assignedCases;
+
+  persistList(AGENTS_KEY, agents);
+  renderAgents();
+  renderStats();
+
+  if (currentAgent.role === "admin") {
+    setAdminMessage(`Profilo agente ${target.id} aggiornato.`);
+  }
+}
 
 function handleAddWeaponEntry(event) {
   event.preventDefault();
@@ -267,22 +374,100 @@ function handleAddInvestigationLink(event) {
   investigationLinks.unshift({ label, url });
   persistList(LINKS_KEY, investigationLinks);
   renderLinks();
+  renderStats();
   els.investigationForm.reset();
   setAdminMessage("Link indagine salvato. Ora è cliccabile per gli utenti autorizzati.");
 }
 
+function handleAddAgent(event) {
+  event.preventDefault();
+
+  if (!isAdmin()) {
+    setAdminMessage("Solo admin può aggiungere agenti.");
+    return;
+  }
+
+  const formData = new FormData(els.agentForm);
+  const id = String(formData.get("newAgentId") || "").trim().toUpperCase();
+  const passcode = String(formData.get("newAgentPasscode") || "").trim();
+  const name = String(formData.get("newAgentName") || "").trim();
+  const unit = String(formData.get("newAgentUnit") || "").trim();
+  const status = String(formData.get("newAgentStatus") || "").trim();
+  const assignedCases = Number(formData.get("newAgentAssignedCases"));
+
+  if (!id || !passcode || !name || !unit || !status || ![1, 2, 3].includes(assignedCases)) {
+    setAdminMessage("Compila tutti i campi del nuovo agente.");
+    return;
+  }
+
+  if (agents.some((agent) => agent.id === id)) {
+    setAdminMessage("ID agente già presente. Scegline uno univoco.");
+    return;
+  }
+
+  agents.unshift({
+    id,
+    passcode,
+    name,
+    unit,
+    status,
+    assignedCases,
+    role: "user",
+  });
+
+  persistList(AGENTS_KEY, agents);
+  renderAgents();
+  renderStats();
+  els.agentForm.reset();
+  setAdminMessage(`Agente ${id} creato con credenziali di accesso operative.`);
+}
+
 function renderAgents() {
-  els.agentsList.innerHTML = detectives
-    .map(
-      (agent) => `
-        <article class="tile">
-          <strong>${escapeHtml(agent.name)}</strong>
+  const currentAgent = getCurrentAgent();
+
+  els.agentsList.innerHTML = agents
+    .map((agent) => {
+      const editable = Boolean(currentAgent) && (currentAgent.role === "admin" || currentAgent.id === agent.id);
+      const profileType = agent.role === "admin" ? "Admin" : "Operatore";
+
+      return `
+        <article class="tile ${editable ? "tile-editable" : ""}">
+          <div class="tile-head">
+            <strong>${escapeHtml(agent.name)}</strong>
+            <span class="pill">${escapeHtml(profileType)}</span>
+          </div>
           <p>ID: ${escapeHtml(agent.id)}</p>
           <p>Unità: ${escapeHtml(agent.unit)}</p>
-          <p class="pill">${escapeHtml(agent.status)}</p>
+          <p>Stato: ${escapeHtml(agent.status)}</p>
+          <p>Assegnato a ${agent.assignedCases} indagini</p>
+
+          ${
+            editable
+              ? `
+            <form class="agent-edit-form" data-agent-update="${escapeAttribute(agent.id)}">
+              <label>Nome</label>
+              <input name="name" type="text" value="${escapeAttribute(agent.name)}" required />
+              <label>Unità</label>
+              <input name="unit" type="text" value="${escapeAttribute(agent.unit)}" required />
+              <label>Stato operativo</label>
+              <input name="status" type="text" value="${escapeAttribute(agent.status)}" required />
+              <label>Assegnazione indagini</label>
+              <select name="assignedCases" required>
+                ${[1, 2, 3]
+                  .map(
+                    (count) =>
+                      `<option value="${count}" ${agent.assignedCases === count ? "selected" : ""}>${count} indagini</option>`,
+                  )
+                  .join("")}
+              </select>
+              <button class="button ghost" type="submit">Aggiorna profilo</button>
+            </form>
+          `
+              : ""
+          }
         </article>
-      `,
-    )
+      `;
+    })
     .join("");
 }
 
@@ -303,6 +488,24 @@ function renderCases() {
 function renderDocs() {
   els.docsList.innerHTML = documentation
     .map((entry) => `<article class="tile"><p>${escapeHtml(entry)}</p></article>`)
+    .join("");
+}
+
+function renderRegulations() {
+  els.regulationsList.innerHTML = regulations
+    .map((entry) => `<li>${escapeHtml(entry)}</li>`)
+    .join("");
+}
+
+function renderUsefulLinks() {
+  els.usefulLinksList.innerHTML = usefulLinks
+    .map(
+      (entry) => `
+        <article class="link-card">
+          <a href="${escapeAttribute(entry.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(entry.label)}</a>
+        </article>
+      `,
+    )
     .join("");
 }
 
@@ -354,6 +557,11 @@ function renderTimeline() {
 }
 
 function renderLinks() {
+  if (!investigationLinks.length) {
+    els.linksList.innerHTML = '<p class="muted">Nessuna indagine rapida attiva.</p>';
+    return;
+  }
+
   els.linksList.innerHTML = investigationLinks
     .map(
       (entry, index) => `
@@ -367,10 +575,12 @@ function renderLinks() {
 }
 
 function renderStats() {
+  const activeAgents = agents.filter((agent) => agent.role === "user").length;
   const stats = [
     `Casi aperti: ${openCases.length}`,
-    `Detective disponibili: ${detectives.length}`,
+    `Operatori disponibili: ${activeAgents}`,
     `Ricercati attivi: ${wanted.length}`,
+    `Voci registro armi: ${armoryRegister.length}`,
     `Link indagini: ${investigationLinks.length}`,
   ];
 
@@ -385,21 +595,33 @@ function toggleSession(isLogged, role) {
   if (isLogged && role === "admin") {
     els.sessionRole.textContent = "Sessione: Admin";
   } else if (isLogged) {
-    els.sessionRole.textContent = "Sessione: Operatore";
+    const current = getCurrentAgent();
+    const idText = current ? ` (${current.id})` : "";
+    els.sessionRole.textContent = `Sessione: Operatore${idText}`;
   } else {
     els.sessionRole.textContent = "";
   }
 }
 
+function getCurrentAgent() {
+  const id = localStorage.getItem(LOGIN_ID_KEY);
+  return id ? findAgent(id) : null;
+}
+
+function findAgent(id) {
+  return agents.find((agent) => agent.id === id);
+}
+
 function isAdmin() {
-  return localStorage.getItem(LOGIN_ROLE_KEY) === "admin";
+  const current = getCurrentAgent();
+  return Boolean(current && current.role === "admin");
 }
 
 function setAdminMessage(text) {
   els.adminMessage.textContent = text;
 }
 
-function loadList(key, fallback) {
+function loadList(key, fallback, refillWhenEmpty) {
   const raw = localStorage.getItem(key);
   if (!raw) {
     persistList(key, fallback);
@@ -408,8 +630,19 @@ function loadList(key, fallback) {
 
   try {
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [...fallback];
+    if (!Array.isArray(parsed)) {
+      persistList(key, fallback);
+      return [...fallback];
+    }
+
+    if (refillWhenEmpty && parsed.length === 0 && fallback.length > 0) {
+      persistList(key, fallback);
+      return [...fallback];
+    }
+
+    return parsed;
   } catch {
+    persistList(key, fallback);
     return [...fallback];
   }
 }

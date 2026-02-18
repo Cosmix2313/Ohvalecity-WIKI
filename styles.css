@@ -94,6 +94,16 @@ input {
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
+select {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid rgba(130, 169, 238, 0.35);
+  background: rgba(8, 16, 34, 0.92);
+  color: var(--text);
+  padding: 0.75rem 0.8rem;
+  margin-bottom: 0.6rem;
+}
+
 input::placeholder {
   color: #8aa0c5;
 }
@@ -166,6 +176,35 @@ input:focus {
   background: rgba(10, 20, 41, 0.72);
 }
 
+.tile-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.tile-editable {
+  border-color: rgba(177, 205, 250, 0.45);
+}
+
+.agent-edit-form {
+  margin-top: 0.7rem;
+  border-top: 1px solid rgba(137, 178, 250, 0.25);
+  padding-top: 0.7rem;
+}
+
+.agent-edit-form label {
+  display: block;
+  margin-bottom: 0.2rem;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.agent-edit-form input,
+.agent-edit-form select {
+  margin-bottom: 0.5rem;
+}
+
 .tile p {
   margin: 0.35rem 0 0;
   color: var(--muted);
@@ -204,7 +243,7 @@ input:focus {
 .stats {
   margin: 0;
   padding-left: 1rem;
-  line-height: 1.9;
+  line-height: 1.8;
 }
 
 .timeline {
@@ -221,7 +260,7 @@ input:focus {
 .links-grid {
   display: grid;
   gap: 0.7rem;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
 .inline-form {

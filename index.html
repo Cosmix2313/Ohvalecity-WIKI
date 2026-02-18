@@ -38,9 +38,15 @@
         </header>
 
         <section class="grid">
-          <article class="card panel">
+          <article class="card panel span-2">
             <h3>Registro agenti detective</h3>
+            <p class="muted small">Ogni operatore può aggiornare il proprio profilo e stato (1/2/3 indagini).</p>
             <div id="agentsList" class="tile-list"></div>
+          </article>
+
+          <article class="card panel">
+            <h3>Panoramica operativa</h3>
+            <ul class="stats" id="statsList"></ul>
           </article>
 
           <article class="card panel">
@@ -68,14 +74,19 @@
             <div id="docsList" class="tile-list"></div>
           </article>
 
+          <article class="card panel">
+            <h3>Regolamento operativo</h3>
+            <ul id="regulationsList" class="stats"></ul>
+          </article>
+
           <article class="card panel span-2">
             <h3>Ricercati / Sorvegliati</h3>
             <div id="wantedList" class="records-list"></div>
           </article>
 
           <article class="card panel">
-            <h3>Panoramica operativa</h3>
-            <ul class="stats" id="statsList"></ul>
+            <h3>Link utili</h3>
+            <div id="usefulLinksList" class="links-grid"></div>
           </article>
 
           <article class="card panel full">
@@ -103,11 +114,38 @@
           <article class="card panel full admin-panel" id="adminPanel" hidden>
             <h3>Pannello Admin</h3>
             <p class="muted small">
-              Come admin puoi inserire nuovi ricercati e link indagini (es. Google Sheet condiviso)
-              visibili a chi ha accesso al database.
+              Come admin puoi aggiungere agenti (ID + password), aggiornare gli stati dalla lista operatori,
+              inserire ricercati e link indagini (es. Google Sheet condiviso).
             </p>
 
             <div class="admin-grid">
+              <form id="agentForm" class="admin-form">
+                <h4>Aggiungi agente</h4>
+                <label for="newAgentId">Agent ID</label>
+                <input id="newAgentId" name="newAgentId" type="text" placeholder="FC-501" required />
+
+                <label for="newAgentPasscode">Passcode</label>
+                <input id="newAgentPasscode" name="newAgentPasscode" type="text" required />
+
+                <label for="newAgentName">Nome</label>
+                <input id="newAgentName" name="newAgentName" type="text" required />
+
+                <label for="newAgentUnit">Unità</label>
+                <input id="newAgentUnit" name="newAgentUnit" type="text" required />
+
+                <label for="newAgentStatus">Stato operativo</label>
+                <input id="newAgentStatus" name="newAgentStatus" type="text" placeholder="On Duty" required />
+
+                <label for="newAgentAssignedCases">Assegnazione indagini</label>
+                <select id="newAgentAssignedCases" name="newAgentAssignedCases" required>
+                  <option value="1">1 indagine</option>
+                  <option value="2">2 indagini</option>
+                  <option value="3">3 indagini</option>
+                </select>
+
+                <button class="button" type="submit">Crea agente</button>
+              </form>
+
               <form id="wantedForm" class="admin-form">
                 <h4>Aggiungi ricercato</h4>
                 <label for="wantedName">Nome</label>
