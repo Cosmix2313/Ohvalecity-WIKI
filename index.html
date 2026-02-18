@@ -13,9 +13,7 @@
       <section class="login-screen card" id="loginScreen">
         <p class="tag">Fort Carson CID</p>
         <h1>Investigative Database Access</h1>
-        <p class="muted">
-          Sistema protetto per analisi casi, soggetti e prove digitali.
-        </p>
+        <p class="muted">Accesso riservato alle unità investigative autorizzate.</p>
 
         <form id="loginForm" class="login-form">
           <label for="agentId">Agent ID</label>
@@ -24,7 +22,7 @@
           <label for="passcode">Passcode</label>
           <input id="passcode" type="password" placeholder="••••••••" required />
 
-          <button class="button" type="submit">Autenticazione sicura</button>
+          <button class="button" type="submit">Accedi al pannello</button>
           <p id="loginError" class="error" aria-live="polite"></p>
         </form>
       </section>
@@ -39,7 +37,27 @@
         </header>
 
         <section class="grid">
-          <article class="card">
+          <article class="card panel">
+            <h3>Lista agenti detective</h3>
+            <div id="agentsList" class="tile-list"></div>
+          </article>
+
+          <article class="card panel">
+            <h3>Lista casi aperti</h3>
+            <div id="casesList" class="tile-list"></div>
+          </article>
+
+          <article class="card panel">
+            <h3>Documentazione</h3>
+            <div id="docsList" class="tile-list"></div>
+          </article>
+
+          <article class="card panel">
+            <h3>Registro armi</h3>
+            <div id="weaponsList" class="tile-list"></div>
+          </article>
+
+          <article class="card panel full">
             <h3>Ricerca soggetti</h3>
             <input
               id="searchInput"
@@ -50,17 +68,19 @@
             <div id="recordsList" class="records-list"></div>
           </article>
 
-          <article class="card">
-            <h3>Panoramica operativa</h3>
-            <ul class="stats" id="statsList"></ul>
-            <p class="muted small">
-              Demo frontend: collegare backend/API per dati reali investigativi.
-            </p>
+          <article class="card panel span-2">
+            <h3>Registro attività live</h3>
+            <div id="timeline" class="timeline"></div>
           </article>
 
-          <article class="card full">
-            <h3>Timeline attività</h3>
-            <div id="timeline" class="timeline"></div>
+          <article class="card panel">
+            <h3>Panoramica operativa</h3>
+            <ul class="stats" id="statsList"></ul>
+          </article>
+
+          <article class="card panel full">
+            <h3>Link utili</h3>
+            <div id="linksList" class="links-grid"></div>
           </article>
         </section>
       </section>
