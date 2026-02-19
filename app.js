@@ -6,54 +6,11 @@ const WANTED_KEY = "fcid-wanted";
 const LINKS_KEY = "fcid-investigation-links";
 const WEAPONS_KEY = "fcid-weapons";
 
-const defaultAgents = [
-  {
-    id: "FC-ADMIN",
-    name: "Cmdr. Ava Sullivan",
-    unit: "Command Desk",
-    grade: "Comandante CID",
-    status: "Supervisione",
-    assignedCases: 2,
-    passcode: "fortadmin",
-    role: "admin",
-  },
-  {
-    id: "FC-214",
-    name: "Lt. Mason Reed",
-    unit: "CID Alpha",
-    grade: "Detective Senior",
-    status: "On Duty",
-    assignedCases: 2,
-    passcode: "fortcarson",
-    role: "user",
-  },
-  {
-    id: "FC-327",
-    name: "Sgt. Elena Rossi",
-    unit: "Digital Forensics",
-    grade: "Detective in formazione",
-    status: "In Lab",
-    assignedCases: 1,
-    passcode: "rossi327",
-    role: "user",
-  },
-  {
-    id: "FC-412",
-    name: "Det. Linda Ortega",
-    unit: "Interviews",
-    grade: "Detective Operativo",
-    status: "Briefing",
-    assignedCases: 3,
-    passcode: "ortega412",
-    role: "user",
-  },
-];
+const BOOTSTRAP_ADMIN = { id: "FC-ADMIN", passcode: "fortadmin" };
 
-const openCases = [
-  { code: "CASE-19A", title: "Operazione Sandtrail", priority: "Alta" },
-  { code: "CASE-27C", title: "Traffico componenti militari", priority: "Critica" },
-  { code: "CASE-08F", title: "Accessi non autorizzati a deposito", priority: "Media" },
-];
+const defaultAgents = [];
+
+const openCases = [];
 
 const documentation = [
   "Protocollo interrogatori CID v3.4",
@@ -75,12 +32,7 @@ const usefulLinks = [
   { label: "Knowledge base catena di custodia", url: "https://drive.google.com/" },
 ];
 
-const defaultArmoryRegister = [
-  "M4A1 - Serial FCM4-7721 - Assegnata a Unit Bravo",
-  "G17 - Serial FCG17-3120 - Armory shelf B2",
-  "Taser X26 - Serial FCX26-9914 - In manutenzione",
-  "Bodycam AXON-12 - Serial FCAX-1008 - In uso operativo",
-];
+const defaultArmoryRegister = [];
 
 const defaultWanted = [
   { name: "Bennett, Carl", alias: "North Wolf", danger: "Alto", note: "Ricercato per furto armamenti" },
@@ -163,6 +115,16 @@ function handleLogin(event) {
   const id = els.agentId.value.trim().toUpperCase();
   const pass = els.passcode.value.trim();
   const agent = findAgent(id);
+
+  if (!agent && id === BOOTSTRAP_ADMIN.id && pass === BOOTSTRAP_ADMIN.passcode) {
+    localStorage.setItem(LOGIN_KEY, "1");
+    localStorage.setItem(LOGIN_ROLE_KEY, "admin");
+    localStorage.setItem(LOGIN_ID_KEY, BOOTSTRAP_ADMIN.id);
+    els.loginError.textContent = "";
+    toggleSession(true, "admin");
+    renderAgents();
+    return;
+  }
 
   if (!agent || agent.passcode !== pass) {
     els.loginError.textContent = "Credenziali non valide. Verifica Agent ID e passcode.";
@@ -403,6 +365,11 @@ function renderAgents() {
 }
 
 function renderCases() {
+  if (!openCases.length) {
+    els.casesList.innerHTML = '<p class="muted">Nessun caso aperto registrato.</p>';
+    return;
+  }
+
   els.casesList.innerHTML = openCases
     .map(
       (item) => `
@@ -437,6 +404,11 @@ function renderUsefulLinks() {
 }
 
 function renderWeapons() {
+  if (!armoryRegister.length) {
+    els.weaponsList.innerHTML = '<p class="muted">Registro armi vuoto.</p>';
+    return;
+  }
+
   els.weaponsList.innerHTML = armoryRegister.map((entry) => `<article class="tile"><p>${escapeHtml(entry)}</p></article>`).join("");
 }
 
