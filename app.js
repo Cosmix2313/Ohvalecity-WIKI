@@ -95,6 +95,7 @@ function init() {
   els.investigationForm.addEventListener("submit", handleAddInvestigationLink);
   els.agentForm.addEventListener("submit", handleAddAgent);
   els.agentsList.addEventListener("submit", handleAgentUpdate);
+  els.agentsList.addEventListener("click", handleRemoveAgent);
 }
 
 function renderAll() {
@@ -154,13 +155,14 @@ function handleAgentUpdate(event) {
   if (!form) return;
 
   const currentAgent = getCurrentAgent();
-  if (!currentAgent) return;
+  const isAdminRole = getCurrentRole() === "admin";
+  if (!currentAgent && !isAdminRole) return;
 
   const targetId = form.dataset.agentUpdate;
   const target = findAgent(targetId);
   if (!target) return;
 
-  const canEdit = currentAgent.role === "admin" || currentAgent.id === targetId;
+  const canEdit = isAdminRole || (currentAgent && currentAgent.id === targetId);
   if (!canEdit) return;
 
   const formData = new FormData(form);
@@ -172,7 +174,7 @@ function handleAgentUpdate(event) {
   target.status = status;
   target.assignedCases = assignedCases;
 
-  if (currentAgent.role === "admin") {
+  if (isAdminRole) {
     const name = String(formData.get("name") || "").trim();
     const unit = String(formData.get("unit") || "").trim();
     const grade = String(formData.get("grade") || "").trim();
@@ -186,6 +188,21 @@ function handleAgentUpdate(event) {
   persistList(AGENTS_KEY, agents);
   renderAgents();
   renderStats();
+}
+
+function handleRemoveAgent(event) {
+  const button = event.target.closest("button[data-remove-agent]");
+  if (!button || getCurrentRole() !== "admin") return;
+
+  const targetId = button.dataset.removeAgent;
+  const index = agents.findIndex((agent) => agent.id === targetId);
+  if (index < 0) return;
+
+  agents.splice(index, 1);
+  persistList(AGENTS_KEY, agents);
+  renderAgents();
+  renderStats();
+  setAdminMessage(`Agente ${targetId} rimosso dal registro.`);
 }
 
 function handleAddWeaponEntry(event) {
@@ -306,11 +323,16 @@ function handleAddAgent(event) {
 
 function renderAgents() {
   const currentAgent = getCurrentAgent();
+  const isAdminViewer = getCurrentRole() === "admin";
+
+  if (!agents.length) {
+    els.agentsList.innerHTML = '<p class="muted">Nessun agente registrato.</p>';
+    return;
+  }
 
   els.agentsList.innerHTML = agents
     .map((agent) => {
-      const isAdminViewer = Boolean(currentAgent && currentAgent.role === "admin");
-      const editable = Boolean(currentAgent) && (isAdminViewer || currentAgent.id === agent.id);
+      const editable = isAdminViewer || Boolean(currentAgent && currentAgent.id === agent.id);
       const profileType = agent.role === "admin" ? "Admin" : "Operatore";
 
       return `
@@ -355,6 +377,12 @@ function renderAgents() {
               </select>
               <button class="button ghost" type="submit">Aggiorna profilo</button>
             </form>
+
+            ${
+              isAdminViewer
+                ? `<button class="button ghost remove-btn" type="button" data-remove-agent="${escapeAttribute(agent.id)}">Rimuovi agente</button>`
+                : ""
+            }
           `
               : ""
           }
@@ -482,6 +510,10 @@ function toggleSession(isLogged, role) {
   }
 }
 
+function getCurrentRole() {
+  return localStorage.getItem(LOGIN_ROLE_KEY) || "guest";
+}
+
 function ensureAgentSchema() {
   let changed = false;
   agents.forEach((agent) => {
@@ -506,8 +538,7 @@ function findAgent(id) {
 }
 
 function isAdmin() {
-  const current = getCurrentAgent();
-  return Boolean(current && current.role === "admin");
+  return getCurrentRole() === "admin";
 }
 
 function setAdminMessage(text) {
